@@ -1,0 +1,22 @@
+# Binaries
+*.exe
+*.out
+*.o
+
+# Environment variables
+.env
+
+# Editor configs
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Build output
+bin/
+dist/
+
+# Vendor folder if used
+vendor/

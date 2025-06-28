@@ -1,0 +1,532 @@
+basePath: /
+definitions:
+  models.BookingDTO:
+    properties:
+      employee_id:
+        type: integer
+      end_time:
+        type: string
+      num_attendees:
+        type: integer
+      room_id:
+        type: integer
+      start_time:
+        type: string
+    type: object
+  models.EmployeeDTO:
+    properties:
+      email:
+        type: string
+      name:
+        type: string
+      password:
+        type: string
+    type: object
+  models.RoomDTO:
+    properties:
+      capacity:
+        type: integer
+      location:
+        type: string
+      name:
+        type: string
+    type: object
+host: localhost:9010
+info:
+  contact: {}
+  description: API documentation for Meeting Room Booking system
+  title: Meeting Room Booking API
+  version: "1.0"
+paths:
+  /booking/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Allows an authenticated employee to delete their booking
+      parameters:
+      - description: Booking ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Deleted booking details
+        in: body
+        name: booking
+        required: true
+        schema:
+          $ref: '#/definitions/models.BookingDTO'
+      produces:
+      - application/json
+      responses:
+        "400":
+          description: Invalid Employee ID or JSON input
+          schema:
+            type: string
+        "401":
+          description: Unauthorized (not logged in)
+          schema:
+            type: string
+        "403":
+          description: Forbidden (trying to update another employee's booking)
+          schema:
+            type: string
+        "404":
+          description: Booking not found
+          schema:
+            type: string
+        "500":
+          description: Failed to delete booking
+          schema:
+            type: string
+      summary: Delete existing booking details
+      tags:
+      - Bookings
+    put:
+      consumes:
+      - application/json
+      description: Allows an authenticated employee to update their booking
+      parameters:
+      - description: Booking ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Updated booking details
+        in: body
+        name: booking
+        required: true
+        schema:
+          $ref: '#/definitions/models.BookingDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.BookingDTO'
+        "400":
+          description: Invalid Employee ID or JSON input
+          schema:
+            type: string
+        "401":
+          description: Unauthorized (not logged in)
+          schema:
+            type: string
+        "403":
+          description: Forbidden (trying to update another employee's booking)
+          schema:
+            type: string
+        "404":
+          description: Booking not found
+          schema:
+            type: string
+        "500":
+          description: Failed to update booking
+          schema:
+            type: string
+      summary: Update existing booking details
+      tags:
+      - Bookings
+  /bookings:
+    get:
+      description: Retrieves all bookings along with all details
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.BookingDTO'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Get list of all bookings
+      tags:
+      - Bookings
+    post:
+      consumes:
+      - application/json
+      description: Creates a new booking if the time and capacity constraints are
+        satisfied. Sends confirmation email and adds Google Calendar event if linked.
+      parameters:
+      - description: Booking request data
+        in: body
+        name: booking
+        required: true
+        schema:
+          $ref: '#/definitions/models.BookingDTO'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.BookingDTO'
+        "400":
+          description: Invalid input or time conflict
+          schema:
+            type: string
+        "401":
+          description: Unauthorized
+          schema:
+            type: string
+        "409":
+          description: Booking time conflict
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Create a new booking
+      tags:
+      - Bookings
+  /bookings/{id}:
+    get:
+      description: Retrieves booking details by ID including employee and room info
+      parameters:
+      - description: Booking ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.BookingDTO'
+        "400":
+          description: Invalid ID
+          schema:
+            type: string
+        "404":
+          description: Booking not found
+          schema:
+            type: string
+        "500":
+          description: Error marshalling data
+          schema:
+            type: string
+      summary: Get booking by booking ID
+      tags:
+      - Bookings
+  /employees:
+    get:
+      description: Returns a list of all employees with their bookings and room details
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.EmployeeDTO'
+            type: array
+      summary: Get all employees
+      tags:
+      - Employees
+  /employees/{id}:
+    get:
+      description: Retrieves employee details by ID including bookings and room info,
+        uses cache for faster response
+      parameters:
+      - description: Employee ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.EmployeeDTO'
+        "400":
+          description: Invalid ID
+          schema:
+            type: string
+        "404":
+          description: Employee not found
+          schema:
+            type: string
+        "500":
+          description: Error marshalling data
+          schema:
+            type: string
+      summary: Get employee by ID (with cache)
+      tags:
+      - Employees
+    put:
+      consumes:
+      - application/json
+      description: Allows an authenticated employee to update their name, email, and
+        password
+      parameters:
+      - description: Employee ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Updated employee details (name, email, password)
+        in: body
+        name: employee
+        required: true
+        schema:
+          $ref: '#/definitions/models.EmployeeDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.EmployeeDTO'
+        "400":
+          description: Invalid Employee ID or JSON input
+          schema:
+            type: string
+        "401":
+          description: Unauthorized (not logged in)
+          schema:
+            type: string
+        "403":
+          description: Forbidden (trying to update another employee)
+          schema:
+            type: string
+        "404":
+          description: Employee not found
+          schema:
+            type: string
+        "500":
+          description: Failed to update employee
+          schema:
+            type: string
+      summary: Update an employee's own details
+      tags:
+      - Employees
+  /google/login:
+    get:
+      description: Redirects logged-in employee to Google OAuth consent screen for
+        authentication
+      produces:
+      - text/plain
+      responses:
+        "307":
+          description: Redirect to Google OAuth consent screen
+        "401":
+          description: User not logged in
+          schema:
+            type: string
+        "500":
+          description: Failed to create auth URL
+          schema:
+            type: string
+      summary: Initiate Google OAuth login flow
+      tags:
+      - Authentication
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticates employee by email and password and starts a session
+      parameters:
+      - description: Login credentials (email and password)
+        in: body
+        name: credentials
+        required: true
+        schema:
+          $ref: '#/definitions/models.EmployeeDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Login successful message
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid input
+          schema:
+            type: string
+        "401":
+          description: Email not found or incorrect password
+          schema:
+            type: string
+      summary: Log in an employee
+      tags:
+      - Authentication
+  /logout:
+    post:
+      description: Ends the employee's session by clearing session data
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Logout successful message
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Log out the current employee
+      tags:
+      - Authentication
+  /oauth2callback:
+    get:
+      description: Processes OAuth code and state, exchanges code for tokens, and
+        stores them linked to the employee
+      parameters:
+      - description: OAuth authorization code
+        in: query
+        name: code
+        required: true
+        type: string
+      - description: OAuth state parameter
+        in: query
+        name: state
+        required: true
+        type: string
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: Google Calendar authorization successful! You may close this
+            tab.
+          schema:
+            type: string
+        "400":
+          description: Missing or invalid code/state parameter
+          schema:
+            type: string
+        "500":
+          description: Token exchange or database save failed
+          schema:
+            type: string
+      summary: Handle Google OAuth callback
+      tags:
+      - Authentication
+  /register:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new employee account with a hashed password
+      parameters:
+      - description: Employee registration details
+        in: body
+        name: employee
+        required: true
+        schema:
+          $ref: '#/definitions/models.EmployeeDTO'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Invalid input or creation failed
+          schema:
+            type: string
+        "500":
+          description: Failed to hash password
+          schema:
+            type: string
+      summary: Register a new employee
+      tags:
+      - Authentication
+  /rooms:
+    get:
+      description: Retrieves all rooms along with their bookings and booked employees
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.RoomDTO'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Get list of all rooms
+      tags:
+      - Rooms
+    post:
+      consumes:
+      - application/json
+      description: Adds a new meeting room to the system
+      parameters:
+      - description: Room details
+        in: body
+        name: room
+        required: true
+        schema:
+          $ref: '#/definitions/models.RoomDTO'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.RoomDTO'
+        "400":
+          description: Invalid JSON or bad request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Create a new room
+      tags:
+      - Rooms
+  /rooms/{id}:
+    put:
+      consumes:
+      - application/json
+      description: Update details of existing room by ID
+      parameters:
+      - description: Room ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Room details to update
+        in: body
+        name: room
+        required: true
+        schema:
+          $ref: '#/definitions/models.RoomDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/models.RoomDTO'
+        "400":
+          description: Invalid JSON or bad request
+          schema:
+            type: string
+        "404":
+          description: Room not found
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Update room details
+      tags:
+      - Rooms
+swagger: "2.0"
